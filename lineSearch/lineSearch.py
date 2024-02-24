@@ -1,32 +1,26 @@
 from functools import lru_cache
 import numpy as np
 import pandas as pd
-import sys
 from typing import Type
 import warnings
 
-sys.path.append("..")
+import os
+import sys
 
+# Get the parent directory of the current script
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Add the parent directory to the system path
+sys.path.append(parent_dir)
+
+# Now you can import your module
 from utils import absObjective, Phi
 from visualise import visualise
 
 
 class lineSearch(visualise):
     """
-    Class for line search methods
-
-    Attributes:
-        func (Type[absObjective]): the objective function
-        x_init (np.ndarray): initial guess
-        alpha_max (float): maximum step size
-        c1 (float): constant for Armijo condition
-        c2 (float): constant for curvature condition
-        rho (float): step size reduction factor for backtracking
-        tol (float): tolerance for the stopping criterion
-        max_iter (int): maximum number of iterations
-
-    Methods:
-        __init__: initialize the line search object
+    Base class for line search methods
     """
 
     def __init__(
@@ -88,7 +82,6 @@ class lineSearch(visualise):
                 "ls_method": "strong_wolfe",
                 "descent_method": "steepest",
             }
-
         # Set attributes
         self.func = func
         self.x_init = x_init
