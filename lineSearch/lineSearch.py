@@ -14,8 +14,7 @@ parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parent_dir)
 
 # Now you can import your module
-from utils import absObjective, Phi
-from visualise import visualise
+from utils import absObjective, Phi, visualise
 
 
 class lineSearch(visualise):

@@ -5,9 +5,6 @@ import numpy as np
 
 from lineSearch import *
 
-import os
-import sys
-
 # Get the parent directory of the current script
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
