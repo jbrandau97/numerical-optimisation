@@ -8,9 +8,10 @@ import warnings
 sys.path.append("..")
 
 from utils import absObjective, Phi
+from visualise import visualise
 
 
-class lineSearch:
+class lineSearch(visualise):
     """
     Class for line search methods
 
