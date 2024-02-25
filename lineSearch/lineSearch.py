@@ -52,6 +52,7 @@ class lineSearch(visualise):
                 Optional parameters:
                     inv_hessian_update (str): quasi-Newton method for updating the inverse Hessian approximation H, either "bfgs" or "dfp"
                     inv_hessian_init (np.ndarray): initial inverse Hessian approximation H
+                    adjust_alpha (str): adjust the initial step length alpha after each iteration, either "gradient" or "interpolation" with "gradient" being the default
 
         Returns:
             None
@@ -118,8 +119,18 @@ class lineSearch(visualise):
         for i in range(self.max_iter):
             p = -self.data.loc[i, "df"]
 
-            # Update the initial guess for step length alpha
-            if i > 0:
+            # Adjust the initial guess for step length alpha
+            if i > 0 and self.params["adjust_alpha"] == "interpolation":
+                self.alpha_init = np.min(
+                    1,
+                    1.01
+                    * (
+                        2
+                        * (self.data[i, "f"] - self.data[i - 1, "f"])
+                        / (self.func.df(self.data[i, "x"]).T @ p)
+                    ),
+                )
+            elif i > 0:
                 self.alpha_init = (
                     self.data.loc[i - 1, "alpha"]
                     * self.data.loc[i - 1, "gnorm"] ** 2
