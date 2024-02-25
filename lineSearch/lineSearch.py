@@ -167,20 +167,38 @@ class lineSearch(visualise):
         """
 
         self.alpha_init = self.alpha_max
-        self.data = pd.DataFrame(columns=["x", "f", "df", "d2f", "H", "alpha", "gnorm"])
-        self.data.loc[0] = [
-            self.x_init,
-            self.func.f(self.x_init),
-            self.func.df(self.x_init),
-            self.func.d2f(self.x_init),
-            (
-                self.params["inv_hessian_init"]
-                if "hessian_init" in self.params
-                else np.eye(len(self.x_init))
-            ),
-            0,
-            np.linalg.norm(self.func.df(self.x_init)),
-        ]
+        match self.params["descent_method"]:
+            case "newton":
+                self.data = pd.DataFrame(
+                    columns=["x", "f", "df", "d2f", "alpha", "gnorm"]
+                )
+                self.data.loc[0] = [
+                    self.x_init,
+                    self.func.f(self.x_init),
+                    self.func.df(self.x_init),
+                    self.func.d2f(self.x_init),
+                    0,
+                    np.linalg.norm(self.func.df(self.x_init)),
+                ]
+            case "quasi_newton":
+                self.data = pd.DataFrame(
+                    columns=["x", "f", "df", "d2f", "H", "alpha", "gnorm"]
+                )
+                self.data.loc[0] = [
+                    self.x_init,
+                    self.func.f(self.x_init),
+                    self.func.df(self.x_init),
+                    self.func.d2f(self.x_init),
+                    (
+                        self.params["inv_hessian_init"]
+                        if "hessian_init" in self.params
+                        else np.eye(len(self.x_init))
+                    ),
+                    0,
+                    np.linalg.norm(self.func.df(self.x_init)),
+                ]
+            case other:
+                raise ValueError("Invalid descent method")
 
         for i in range(self.max_iter):
             match self.params["descent_method"]:
@@ -190,8 +208,6 @@ class lineSearch(visualise):
                     )
                 case "quasi_newton":
                     p = -self.data.loc[i, "H"] @ self.data.loc[i, "df"]
-                case other:
-                    raise ValueError("Invalid descent method")
 
             match self.params["ls_method"]:
                 case "backtracking":
@@ -203,47 +219,62 @@ class lineSearch(visualise):
                 case other:
                     raise ValueError("Invalid line search method")
 
-            self.data.loc[i + 1] = [
-                self.data.loc[i, "x"] + self.alpha * p,
-                self.func.f(self.data.loc[i, "x"] + self.alpha * p),
-                self.func.df(self.data.loc[i, "x"] + self.alpha * p),
-                self.func.d2f(self.data.loc[i, "x"] + self.alpha * p),
-                np.eye(len(self.data.loc[i, "x"])),
-                self.alpha,
-                np.linalg.norm(self.func.df(self.data.loc[i, "x"] + self.alpha * p)),
-            ]
-
-            if self.params["descent_method"] == "quasi_newton":
-                y = np.reshape(
-                    self.data.loc[i + 1, "df"] - self.func.loc[i, "df"],
-                    (2, 1),
-                )
-                s = np.reshape(self.alpha * p, (2, 1))
-                match self.params["inv_hessian_update"]:
-                    case (
-                        "dfp"
-                    ):  # Davidon-Fletcher-Powell (DFP) formula with inverse Hessian approximation obtained by Sherman-Morrison-Woodbury formula
-                        self.data.loc[i + 1, "H"] = (
-                            self.data.loc[i, "H"]
-                            - (
-                                (self.data.loc[i, "H"] @ y)
-                                @ y.T
-                                @ self.data.loc[i, "H"]
+            match self.params["descent_method"]:
+                case "newton":
+                    self.data.loc[i + 1] = [
+                        self.data.loc[i, "x"] + self.alpha * p,
+                        self.func.f(self.data.loc[i, "x"] + self.alpha * p),
+                        self.func.df(self.data.loc[i, "x"] + self.alpha * p),
+                        self.func.d2f(self.data.loc[i, "x"] + self.alpha * p),
+                        self.alpha,
+                        np.linalg.norm(
+                            self.func.df(self.data.loc[i, "x"] + self.alpha * p)
+                        ),
+                    ]
+                case "quasi_newton":
+                    y = np.reshape(
+                        self.func.df(self.data.loc[i, "x"] + self.alpha * p)
+                        - self.data.loc[i, "df"],
+                        (2, 1),
+                    )
+                    s = np.reshape(self.alpha * p, (2, 1))
+                    match self.params["inv_hessian_update"]:
+                        case (
+                            "dfp"
+                        ):  # Davidon-Fletcher-Powell (DFP) formula with inverse Hessian approximation obtained by Sherman-Morrison-Woodbury formula
+                            H = (
+                                self.data.loc[i, "H"]
+                                - (
+                                    (self.data.loc[i, "H"] @ y)
+                                    @ y.T
+                                    @ self.data.loc[i, "H"]
+                                )
+                                / (y.T @ self.data.loc[i, "H"] @ y)
+                                + (s @ s.T) / (y.T @ s)
                             )
-                            / (y.T @ self.data.loc[i, "H"] @ y)
-                            + (s @ s.T) / (y.T @ s)
-                        )
-                    case (
-                        "bfgs"
-                    ):  # Broyden-Fletcher-Goldfarb-Shanno (BFGS) formula with inverse Hessian approximation obtained by Sherman-Morrison-Woodbury formula
-                        r = 1 / (y.T @ s)
-                        self.data.loc[i + 1, "H"] = (
-                            np.eye(len(self.x_init)) - (r * (s @ y.T))
-                        ) @ self.data.loc[i, "H"] @ (
-                            np.eye(len(self.x_init)) - (r * (y @ s.T))
-                        ) + (
-                            r * (s @ s.T)
-                        )
+                        case (
+                            "bfgs"
+                        ):  # Broyden-Fletcher-Goldfarb-Shanno (BFGS) formula with inverse Hessian approximation obtained by Sherman-Morrison-Woodbury formula
+                            r = 1 / (y.T @ s)
+                            H = (
+                                np.eye(len(self.x_init)) - (r * (s @ y.T))
+                            ) @ self.data.loc[i, "H"] @ (
+                                np.eye(len(self.x_init)) - (r * (y @ s.T))
+                            ) + (
+                                r * (s @ s.T)
+                            )
+
+                    self.data.loc[i + 1] = [
+                        self.data.loc[i, "x"] + self.alpha * p,
+                        self.func.f(self.data.loc[i, "x"] + self.alpha * p),
+                        self.func.df(self.data.loc[i, "x"] + self.alpha * p),
+                        self.func.d2f(self.data.loc[i, "x"] + self.alpha * p),
+                        H,
+                        self.alpha,
+                        np.linalg.norm(
+                            self.func.df(self.data.loc[i, "x"] + self.alpha * p)
+                        ),
+                    ]
 
             if np.linalg.norm(self.data.loc[i + 1, "df"], ord=np.inf) < self.tol * (
                 1 + np.abs(self.data.loc[i + 1, "f"])
