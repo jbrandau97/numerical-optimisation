@@ -81,6 +81,7 @@ class lineSearch(visualise):
             self.params: dict = {
                 "ls_method": "strong_wolfe",
                 "descent_method": "steepest",
+                "adjust_alpha": "gradient",
             }
         else:
             self.params: dict = params
