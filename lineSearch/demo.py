@@ -36,5 +36,7 @@ l1 = lineSearch(
     },
 )
 l1.newton()
-print(l1.data)
+
+print(f"The minimum is at {l1.data["x"].iloc[-1]} with value {l1.data["f"].iloc[-1]} reached in {len(l1.data)-1} iterations.")
+
 l1.plot_contour()

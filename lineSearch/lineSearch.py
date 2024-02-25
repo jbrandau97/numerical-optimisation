@@ -321,6 +321,29 @@ class lineSearch(visualise):
 
         return alpha[-1]
 
+    def backtracking(self, x: np.ndarray, p: np.ndarray) -> float:
+        """
+        Backtracking line search method
+
+        Args:
+            x (np.ndarray): current iterate
+            p (np.ndarray): search direction
+
+        Returns:
+            alpha (float): step size that satisfies the Armijo condition
+        """
+
+        alpha = self.alpha_max
+        Phi_ = Phi(self.func, x, p)
+
+        for i in range(self.max_iter):
+            if Phi_.f(alpha) <= Phi_.f(0) + self.c1 * alpha * Phi_.df(0):
+                return alpha
+            else:
+                alpha *= self.rho
+
+        return alpha
+
     def zoom(self, Phi_: Type[Phi], alpha_lo: float, alpha_hi: float) -> float:
         """
         Zoom method for the strong Wolfe line search
