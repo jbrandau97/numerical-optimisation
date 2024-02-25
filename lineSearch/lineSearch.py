@@ -81,6 +81,8 @@ class lineSearch(visualise):
                 "ls_method": "strong_wolfe",
                 "descent_method": "steepest",
             }
+        else:
+            self.params: dict = params
         # Set attributes
         self.func = func
         self.x_init = x_init
@@ -131,6 +133,8 @@ class lineSearch(visualise):
                     self.alpha = self.strongWolfe(self.data.loc[i, "x"], p)
                 case "constant":
                     self.alpha = self.alpha_max
+                case other:
+                    raise ValueError("Invalid line search method")
 
             self.data.loc[i + 1] = [
                 self.data.loc[i, "x"] + self.alpha * p,
@@ -186,6 +190,8 @@ class lineSearch(visualise):
                     )
                 case "quasi_newton":
                     p = -self.data.loc[i, "H"] @ self.data.loc[i, "df"]
+                case other:
+                    raise ValueError("Invalid descent method")
 
             match self.params["ls_method"]:
                 case "backtracking":
@@ -194,20 +200,22 @@ class lineSearch(visualise):
                     self.alpha = self.strongWolfe(self.data.loc[i, "x"], p)
                 case "constant":
                     self.alpha = self.alpha_max
+                case other:
+                    raise ValueError("Invalid line search method")
 
-            self.data.loc[i + 1, ["x", "f", "df", "d2f", "alpha", "gnorm"]] = [
+            self.data.loc[i + 1] = [
                 self.data.loc[i, "x"] + self.alpha * p,
                 self.func.f(self.data.loc[i, "x"] + self.alpha * p),
                 self.func.df(self.data.loc[i, "x"] + self.alpha * p),
                 self.func.d2f(self.data.loc[i, "x"] + self.alpha * p),
+                np.eye(len(self.data.loc[i, "x"])),
                 self.alpha,
                 np.linalg.norm(self.func.df(self.data.loc[i, "x"] + self.alpha * p)),
             ]
 
             if self.params["descent_method"] == "quasi_newton":
                 y = np.reshape(
-                    self.func.df(self.data.loc[i + 1, "x"])
-                    - self.func.df(self.data.loc[i, "x"]),
+                    self.data.loc[i + 1, "df"] - self.func.loc[i, "df"],
                     (2, 1),
                 )
                 s = np.reshape(self.alpha * p, (2, 1))
@@ -230,10 +238,12 @@ class lineSearch(visualise):
                     ):  # Broyden-Fletcher-Goldfarb-Shanno (BFGS) formula with inverse Hessian approximation obtained by Sherman-Morrison-Woodbury formula
                         r = 1 / (y.T @ s)
                         self.data.loc[i + 1, "H"] = (
-                            np.eye(len(self.x_init)) - r * s @ y.T
+                            np.eye(len(self.x_init)) - (r * (s @ y.T))
                         ) @ self.data.loc[i, "H"] @ (
-                            np.eye(len(self.x_init)) - r * y @ s.T
-                        ) + r * s @ s.T
+                            np.eye(len(self.x_init)) - (r * (y @ s.T))
+                        ) + (
+                            r * (s @ s.T)
+                        )
 
             if np.linalg.norm(self.data.loc[i + 1, "df"], ord=np.inf) < self.tol * (
                 1 + np.abs(self.data.loc[i + 1, "f"])

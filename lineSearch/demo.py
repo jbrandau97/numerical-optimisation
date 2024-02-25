@@ -26,7 +26,15 @@ class shitFunction(absObjective):
         return nd.Hessian(self.f)(x)
 
 
-l1 = lineSearch(shitFunction(), np.array([1.0, -2.0]))
-l1.steepestDescent()
+l1 = lineSearch(
+    shitFunction(),
+    np.array([1.0, -2.0]),
+    params={
+        "ls_method": "strong_wolfe",
+        "descent_method": "quasi_newton",
+        "inv_hessian_update": "bfgs",
+    },
+)
+l1.newton()
 print(l1.data)
 l1.plot_contour()
