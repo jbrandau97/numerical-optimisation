@@ -3,7 +3,7 @@ import os
 import numdifftools as nd
 import numpy as np
 
-from lineSearch import *
+from lineSearch import lineSearch
 
 # Get the parent directory of the current script
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -17,7 +17,7 @@ from utils import absObjective, Phi
 
 class shitFunction(absObjective):
     def f(self, x: np.array):
-        return (x[1] + np.log(x[0])) ** 2 + (x[1] - x[0]) ** 2
+        return 100 * (x[1] - x[0] ** 2) ** 2 + (1 - x[0]) ** 2
 
     def df(self, x: np.array):
         return nd.Gradient(self.f)(x)
