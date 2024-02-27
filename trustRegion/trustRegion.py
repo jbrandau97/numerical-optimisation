@@ -37,9 +37,14 @@ class _trustRegion(visualise):
         Constructor for the _trustRegion class.
 
         Args:
-            radius (float): initial trust region radius
-            maxIter (int): maximum number of iterations
-            tol (float): tolerance for the stopping criterion
+            func (Type[absObjective]): the objective function
+            x_init (np.ndarray): the initial guess
+            delta_max (float): the maximum trust region radius
+            eta (float): the threshold for the ratio of the actual reduction to the predicted reduction
+            tol (float): the tolerance for the norm of the gradient
+            max_iter (int): the maximum number of iterations
+            params (dict): the parameters for the trust region method
+                ls_method (str): the solver for the constrained subproblem, either "2d_subspace", "dogleg" or "cauchy"
         """
 
         self.func = func
@@ -50,7 +55,6 @@ class _trustRegion(visualise):
         self.max_iter = max_iter
         if params is None:
             self.params = {
-                "ls_method": "strong_wolfe",
                 "solver": "2d_subspace",
             }
         else:
@@ -262,3 +266,25 @@ class _trustRegion(visualise):
                         if self.tau < 1
                         else self.pU + (self.tau - 1) * (self.pN - self.pU)
                     )
+
+    def solveCauchy(self) -> np.ndarray:
+        """
+        Solve the Cauchy trust region problem.
+
+        Args:
+            None
+
+        Returns:
+            p (np.ndarray): the search direction
+        """
+
+        self.g = self.data["df"].iloc[-1]
+        self.B = self.data["d2f"].iloc[-1]
+
+        self.gBg = self.g.T @ self.B @ self.g
+        self.tau = (
+            1
+            if self.gBg <= 0
+            else min(np.linalg.norm(self.g) ** 3 / (self.delta * self.gBg), 1)
+        )
+        return -self.tau * self.delta / np.linalg.norm(self.g) * self.g

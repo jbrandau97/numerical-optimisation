@@ -15,14 +15,16 @@ parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Add the parent directory to the system path
 sys.path.append(parent_dir)
 sys.path.append(parent_dir + "/lineSearch")
+sys.path.append(parent_dir + "/trustRegion")
 
 # Now you can import your module
 from utils import absObjective, Phi, visualise
 
 from lineSearch import _lineSearch
+from trustRegion import _trustRegion
 
 
-class leastSquares(_lineSearch):
+class leastSquares(_lineSearch, _trustRegion):
     """
     Base class for solving the least squares problem using the line search method
     """
@@ -102,3 +104,14 @@ class leastSquares(_lineSearch):
                 break
             if i == self.max_iter - 1:
                 warnings.warn("Maximum number of iterations reached")
+
+    def levenbergMarquardt(self) -> None:
+        """
+        Solve the least squares problem using the Levenberg-Marquardt method
+
+        Args:
+            None
+
+        Returns:
+            None
+        """

@@ -11,6 +11,7 @@ sys.path.append(parent_dir)
 
 # Now you can import your module
 from utils import absObjective, Phi
+from convergence import _convergence
 from trustRegion import _trustRegion
 
 
@@ -29,11 +30,16 @@ l1 = _trustRegion(
     shitFunction(),
     np.array([1.0, -2.0]),
     params={
-        "solver": "2d_subspace",
+        "solver": "dogleg",
     },
 )
 l1.trustRegion()
 
 print(f"The minimum is at {l1.data["x"].iloc[-1]} with value {l1.data["f"].iloc[-1]} reached in {len(l1.data)-1} iterations.")
 
+print(l1.data)
+
 l1.plot_contour(np.array([-2, 2, -2.5, 4]), npoints=100, ncontours=20)
+
+conv = _convergence(l1, shitFunction(), x_min=np.array([1, 1]), hess=nd.Hessian(shitFunction().f)(np.array([1, 1])))
+conv.plot(q=1)
