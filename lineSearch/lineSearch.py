@@ -17,7 +17,7 @@ sys.path.append(parent_dir)
 from utils import absObjective, Phi, visualise
 
 
-class lineSearch(visualise):
+class _lineSearch:
     """
     Base class for line search methods
     """
@@ -30,8 +30,8 @@ class lineSearch(visualise):
         c1: float = 1e-4,
         c2: float = 0.9,
         rho: float = 0.2,
-        tol: float = 1e-6,
-        max_iter: int = 1000,
+        tol: float = 1e-3,
+        max_iter: int = 100,
         params: dict = None,
     ) -> None:
         """
@@ -48,7 +48,7 @@ class lineSearch(visualise):
             max_iter (int): maximum number of iterations
             params (dict): dictionary of method-specific parameters
                 ls_method (str): line search method, either "backtracking", "strong_wolfe" or "constant"
-                descent_method (str): descent method, either "steepest", "newton" or "quasi_newton"
+                descent_method (str): descent method for Newton-type methods, either "newton" or "quasi_newton"
                 Optional parameters:
                     inv_hessian_update (str): quasi-Newton method for updating the inverse Hessian approximation H, either "bfgs" or "dfp"
                     inv_hessian_init (np.ndarray): initial inverse Hessian approximation H
@@ -123,13 +123,15 @@ class lineSearch(visualise):
             # Adjust the initial guess for step length alpha
             if i > 0 and self.params["adjust_alpha"] == "interpolation":
                 self.alpha_init = np.min(
-                    1,
-                    1.01
-                    * (
-                        2
-                        * (self.data[i, "f"] - self.data[i - 1, "f"])
-                        / (self.func.df(self.data[i, "x"]).T @ p)
-                    ),
+                    [
+                        1,
+                        1.01
+                        * (
+                            2
+                            * (self.data.loc[i, "f"] - self.data.loc[i - 1, "f"])
+                            / (self.func.df(self.data.loc[i, "x"]).T @ p)
+                        ),
+                    ]
                 )
             elif i > 0:
                 self.alpha_init = (
@@ -345,8 +347,8 @@ class lineSearch(visualise):
             alpha (float): step size that satisfies the Armijo condition
         """
 
-        alpha = self.alpha_max
-        Phi_ = Phi(self.func, x, p)
+        Phi_: callable = Phi(self.func, x, p)
+        alpha: float = self.alpha_max
 
         for i in range(self.max_iter):
             if Phi_.f(alpha) <= Phi_.f(0) + self.c1 * alpha * Phi_.df(0):

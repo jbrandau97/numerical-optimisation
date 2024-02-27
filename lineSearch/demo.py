@@ -31,12 +31,14 @@ l1 = lineSearch(
     np.array([1.0, -2.0]),
     params={
         "ls_method": "strong_wolfe",
-        "descent_method": "quasi_newton",
-        "inv_hessian_update": "bfgs",
+        "descent_method": "newton",
+        "inv_hessian_update": "dfp",
+        "adjust_alpha": "gradient",
     },
+    c1=0.0001,
 )
-l1.newton()
+l1.steepestDescent()
 
 print(f"The minimum is at {l1.data["x"].iloc[-1]} with value {l1.data["f"].iloc[-1]} reached in {len(l1.data)-1} iterations.")
 
-l1.plot_contour()
+l1.plot_contour(np.array([-2, 2, -2.5, 4]), npoints=100, ncontours=20)

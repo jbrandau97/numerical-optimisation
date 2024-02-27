@@ -1,4 +1,6 @@
 import abc
+import jax
+import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 from typing import Type
@@ -63,3 +65,10 @@ class visualise:
         ax.set_xlabel("x")
         ax.set_ylabel("y")
         plt.show()
+
+
+def jax_to_numpy(x):
+    """
+    Convert a JAX array to a NumPy array
+    """
+    return np.array(jax.device_get(x))
