@@ -11,7 +11,7 @@ sys.path.append(parent_dir)
 
 # Now you can import your module
 from utils import absObjective, Phi
-from lineSearch import _lineSearch
+from trustRegion import _trustRegion
 
 
 class shitFunction(absObjective):
@@ -25,18 +25,14 @@ class shitFunction(absObjective):
         return nd.Hessian(self.f)(x)
 
 
-l1 = _lineSearch(
+l1 = _trustRegion(
     shitFunction(),
     np.array([1.0, -2.0]),
     params={
-        "ls_method": "strong_wolfe",
-        "descent_method": "newton",
-        "inv_hessian_update": "dfp",
-        "adjust_alpha": "gradient",
+        "solver": "2d_subspace",
     },
-    c1=0.0001,
 )
-l1.steepestDescent()
+l1.trustRegion()
 
 print(f"The minimum is at {l1.data["x"].iloc[-1]} with value {l1.data["f"].iloc[-1]} reached in {len(l1.data)-1} iterations.")
 

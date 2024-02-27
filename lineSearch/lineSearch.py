@@ -17,7 +17,7 @@ sys.path.append(parent_dir)
 from utils import absObjective, Phi, visualise
 
 
-class _lineSearch:
+class _lineSearch(visualise):
     """
     Base class for line search methods
     """
@@ -298,7 +298,7 @@ class _lineSearch:
             if i == self.max_iter - 1:
                 warnings.warn("Maximum number of iterations reached")
 
-    def strongWolfe(self, x: np.ndarray, p) -> float:
+    def strongWolfe(self, x: np.ndarray, p: np.ndarray) -> float:
         """
         Strong Wolfe line search method
 
