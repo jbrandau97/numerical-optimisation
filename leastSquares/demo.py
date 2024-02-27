@@ -15,12 +15,13 @@ sys.path.append(parent_dir + "/lineSearch")
 # Now you can import your module
 from utils import absObjective, Phi
 from lineSearch import _lineSearch
-from leastSquares import leastSquares
+from leastSquares import _leastSquares
+from convergence import _convergence
 
 
 # Define the model
-def model(t):
-    return (3 + 150 * t**2) * np.exp(-2 * t)
+def model(t: np.ndarray, x: np.ndarray = np.array([3, 150, 2])):
+    return (x[0] + x[1] * t**2) * np.exp(-x[2] * t)
 
 
 # Define the grid of time points
@@ -62,7 +63,7 @@ class leastSquaresObjective(absObjective):
 
 
 # Generate the least squares object
-l1 = leastSquares(
+l1 = _leastSquares(
     leastSquaresObjective(t, y),
     x,
     max_iter=100,
@@ -73,15 +74,15 @@ l1 = leastSquares(
 )
 
 # Compare the different decomposition methods
-svd_start = time()
-l1.gaussNewton(res, jac, "SVD")
-svd_end = time()
-qr_start = time()
-l1.gaussNewton(res, jac, "QR")
-qr_end = time()
 chol_start = time()
 l1.gaussNewton(res, jac, "Cholesky")
 chol_end = time()
+qr_start = time()
+l1.gaussNewton(res, jac, "QR")
+qr_end = time()
+svd_start = time()
+l1.gaussNewton(res, jac, "SVD")
+svd_end = time()
 
 # Print the time taken for each decomposition method
 print(f"SVD: {svd_end - svd_start}")
@@ -96,10 +97,12 @@ plt.figure()
 plt.plot(t, y, "b.", label="Noisy measurements")
 plt.plot(
     t,
-    (l1.data["x"].iloc[-1][0] + l1.data["x"].iloc[-1][1] * t**2)
-    * np.exp(-l1.data["x"].iloc[-1][2] * t),
+    model(t, l1.data["x"].iloc[-1]),
     "r-",
     label="Estimated model",
 )
 plt.legend()
 plt.show()
+
+conv = _convergence(l1, leastSquaresObjective(t, y), x_min=np.array([3, 150, 2]))
+conv.plot()

@@ -89,7 +89,7 @@ class _convergence:
             ylabel=r"$\frac{\|x_{k+1}-x^\star\|}{\|x_k-x^\star\|^q}$",
         )
 
-        # Algebraic convergence plot
+        # Algebraic convergence plot - log-log scale
         self.data.plot(
             ax=ax[1],
             y="x_err",
@@ -98,8 +98,9 @@ class _convergence:
             ylabel=r"$\|x_k-x^\star\|$",
         )
         ax[1].set_yscale("log")
+        ax[1].set_xscale("log")
 
-        # Exponential convergence plot
+        # Exponential convergence plot - semi-log scale
         self.data.plot(
             ax=ax[2],
             y="x_err",
@@ -108,7 +109,6 @@ class _convergence:
             ylabel=r"$\|x_k-x^\star\|$",
         )
         ax[2].set_yscale("log")
-        ax[2].set_xscale("log")
 
         plt.tight_layout()
         plt.show()

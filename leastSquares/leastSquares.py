@@ -24,7 +24,7 @@ from lineSearch import _lineSearch
 from trustRegion import _trustRegion
 
 
-class leastSquares(_lineSearch, _trustRegion):
+class _leastSquares(_lineSearch, _trustRegion):
     """
     Base class for solving the least squares problem using the line search method
     """
