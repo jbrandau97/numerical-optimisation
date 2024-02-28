@@ -30,7 +30,7 @@ t = np.linspace(0, 4, 200)
 t_max = t[np.argmax(np.abs(model(t)))]
 # Generate the noisy measurements
 np.random.seed(0)
-y = model(t) + np.random.normal(size=t.size, loc=0, scale=0.05 * np.abs(model(t_max)))
+y = model(t) + np.random.normal(size=t.size, loc=0, scale=0.5 * np.abs(model(t_max)))
 
 # Define the initial guess
 x = np.array([1.0, 1.0, 1.0])
@@ -67,42 +67,38 @@ l1 = _leastSquares(
     leastSquaresObjective(t, y),
     x,
     max_iter=100,
-    params={
-        "ls_method": "strong_wolfe",
-    },
+    c2=0.1,
+)
+l2 = _leastSquares(
+    leastSquaresObjective(t, y),
+    x,
+    max_iter=100,
     c2=0.1,
 )
 
-# Compare the different decomposition methods
-chol_start = time()
-l1.gaussNewton(res, jac, "Cholesky")
-chol_end = time()
-qr_start = time()
-l1.gaussNewton(res, jac, "QR")
-qr_end = time()
-svd_start = time()
-l1.gaussNewton(res, jac, "SVD")
-svd_end = time()
 
-# Print the time taken for each decomposition method
-print(f"SVD: {svd_end - svd_start}")
-print(f"QR: {qr_end - qr_start}")
-print(f"Cholesky: {chol_end - chol_start}")
+l1.solve(res, jac, params={
+        "ls_method": "strong_wolfe",
+        "algorithm": "gauss_newton",
+        "decomp": "SVD",
+    })
+l2.solve(res, jac, params={
+        "ls_method": "strong_wolfe",
+        "algorithm": "levenberg_marquardt",
+        "decomp": "SVD",
+    }, delta_max=3, eta=0.1)
 
 # Print the estimated model parameters
-print(l1.data["x"].iloc[-1])
+print(f"The estimated parameters are (GN): {l1.data["x"].iloc[-1]}")
+print(f"The estimated parameters are (LM): {l2.data["x"].iloc[-1]}")
 
 # Overplot the data with the estimated model
 plt.figure()
 plt.plot(t, y, "b.", label="Noisy measurements")
-plt.plot(
-    t,
-    model(t, l1.data["x"].iloc[-1]),
-    "r-",
-    label="Estimated model",
-)
+plt.plot(t, model(t, l1.data["x"].iloc[-1]), "r-", label="Estimated model (GN)")
+plt.plot(t, model(t, l2.data["x"].iloc[-1]), "g-", label="Estimated model (LM)")
 plt.legend()
 plt.show()
 
 conv = _convergence(l1, leastSquaresObjective(t, y), x_min=np.array([3, 150, 2]))
-conv.plot()
+# conv.plot()

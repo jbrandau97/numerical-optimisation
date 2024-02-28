@@ -79,7 +79,8 @@ class _convergence:
 
         # Q-convergence plot
         self.data["x_err_q"] = np.divide(
-            self.data["x_err"].iloc[1:], np.power(self.data["x_err"].iloc[:-1], q)
+            np.array(self.data["x_err"].iloc[1:]),
+            np.power(self.data["x_err"].iloc[:-1], q),
         )
         self.data.plot(
             ax=ax[0],
